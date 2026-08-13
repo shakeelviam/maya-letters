@@ -7,7 +7,14 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Play:wght@400;700&family=Roboto:wght@400;500;700&family=Noto+Serif:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js"></script>
+<script>
+if(typeof html2pdf==='undefined'){
+  var s=document.createElement('script');
+  s.src='https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+  document.head.appendChild(s);
+}
+</script>
 <style>
   :root{
     --terracotta:#DB5D3E; --terracotta-dark:#C24A2E;
@@ -481,20 +488,41 @@ async function apiPost(payload){
 }
 function setIssueMsg(t,err){const e=$('issueMsg');if(!e)return;e.textContent=t||'';e.className=err?'err':'';}
 
+/* Wait up to `ms` for the html2pdf library to be available. */
+async function waitForHtml2Pdf(ms){
+  const start=Date.now();
+  while(typeof html2pdf==='undefined'){
+    if(Date.now()-start>ms) throw new Error('html2pdf library not loaded (check network / CDN)');
+    await new Promise(r=>setTimeout(r,100));
+  }
+}
+
 /* Capture the visible .page as an A4 PDF and return its base64 (no data: prefix). */
 async function capturePagePdfBase64(){
-  if(typeof html2pdf==='undefined') throw new Error('PDF library not loaded');
-  await document.fonts.ready.catch(()=>{});
+  await waitForHtml2Pdf(6000);
+  try{ await document.fonts.ready; }catch(e){}
   const page=$('page');
-  const opt={ margin:0, filename:'letter.pdf',
-    image:{ type:'jpeg', quality:0.98 },
-    html2canvas:{ scale:2, useCORS:true, backgroundColor:'#ffffff' },
-    jsPDF:{ unit:'mm', format:'a4', orientation:'portrait' } };
+  if(!page) throw new Error('preview element (#page) not found');
+
+  // A4 in pixels at 96dpi: 794 x 1123. Force the capture to that size so
+  // html2canvas doesn't try to render millimetre-based CSS at oddly large sizes.
+  const opt={
+    margin:0,
+    filename:'letter.pdf',
+    image:{ type:'jpeg', quality:0.95 },
+    html2canvas:{
+      scale:2, useCORS:true, backgroundColor:'#ffffff',
+      windowWidth:794, windowHeight:1123, scrollX:0, scrollY:0, logging:false
+    },
+    jsPDF:{ unit:'mm', format:'a4', orientation:'portrait', compress:true },
+    pagebreak:{ mode:['css','legacy'] }
+  };
   const blob=await html2pdf().set(opt).from(page).outputPdf('blob');
+  if(!blob||!blob.size) throw new Error('empty PDF blob');
   return await new Promise((resolve,reject)=>{
     const r=new FileReader();
-    r.onload=()=>resolve(String(r.result).split(',')[1]);
-    r.onerror=()=>reject(new Error('read failed'));
+    r.onload=()=>{ const s=String(r.result||''); const b64=s.split(',')[1]; b64?resolve(b64):reject(new Error('base64 encoding failed')); };
+    r.onerror=()=>reject(new Error('FileReader error'));
     r.readAsDataURL(blob);
   });
 }
@@ -549,12 +577,18 @@ async function issueAndPrint(){
       const wasLinked=linkedRef;linkedRef='';
       const safeName=res.ref.replace(/[\\/]/g,'-')+'.pdf';
       try{
-        await new Promise(r=>setTimeout(r,80));   // let the DOM settle after the ref update
+        await new Promise(r=>setTimeout(r,120));   // let the DOM settle after the ref update
         const b64=await capturePagePdfBase64();
+        const kb=Math.round(b64.length*0.75/1024);
+        setIssueMsg('Logged as '+res.ref+'. PDF '+kb+' KB — uploading…');
         const save=await apiPost({action:'savePdf',ref:res.ref,filename:safeName,pdfBase64:b64});
-        if(save&&save.ok) setIssueMsg('Logged as '+res.ref+'. PDF saved. Opening print…');
+        if(save&&save.ok) setIssueMsg('Logged as '+res.ref+'. PDF saved ('+kb+' KB). Opening print…');
         else setIssueMsg('Logged as '+res.ref+'. PDF save failed: '+((save&&save.error)||'unknown'),true);
-      }catch(e){ setIssueMsg('Logged as '+res.ref+'. PDF capture failed — printing anyway.',true); }
+      }catch(e){
+        const msg=(e&&e.message)?e.message:String(e);
+        setIssueMsg('Logged as '+res.ref+'. PDF capture failed — '+msg+'. Printing anyway.',true);
+        console.error('PDF capture error:',e);
+      }
       setTimeout(()=>window.print(),200);
       if(L.code==='PRR'&&wasLinked)loadOpenIssues();
     }else setIssueMsg('Could not log: '+((res&&res.error)||'unknown'),true);
