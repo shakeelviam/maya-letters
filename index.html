@@ -78,8 +78,9 @@
   .lh-header{margin-bottom:34pt}
   .lh-header img{width:58mm; max-width:220px; height:auto; display:block}
 
-  .letter-body{flex:1; font-size:11.5pt; line-height:1.6; color:#1b1916}
-  .letter-body table.refline{width:100%; border-collapse:collapse; font-size:10.5pt; color:#3a352f; margin:0 0 22pt}
+  .letter-body{flex:1; font-size:10pt; line-height:1.6; color:#1b1916; text-align:justify}
+  .letter-body table{text-align:left}
+  .letter-body table.refline{width:100%; border-collapse:collapse; font-size:10pt; color:#3a352f; margin:0 0 22pt}
   .letter-body table.refline td.l{text-align:left}
   .letter-body table.refline td.r{text-align:right}
   .letter-body .subject{font-weight:600; text-align:center; text-decoration:underline; text-underline-offset:3px; margin:6pt 0 18pt; font-size:12pt}
@@ -87,30 +88,46 @@
   .letter-body .addr{margin:0 0 14pt; white-space:pre-line}
 
   .letter-body .salary-tbl{border-collapse:collapse; margin:6pt 0 10pt; width:auto; min-width:62%}
-  .letter-body .salary-tbl td{padding:5pt 14pt 5pt 0; font-size:11.5pt}
+  .letter-body .salary-tbl td{padding:5pt 14pt 5pt 0; font-size:10pt}
   .letter-body .salary-tbl td.amt{text-align:right; font-variant-numeric:tabular-nums}
   .letter-body .salary-tbl tr.total td{border-top:1px solid #b9b2a6; font-weight:600; padding-top:7pt}
-  .letter-body .words{font-style:italic; color:#3a352f; font-size:10.5pt; margin:0 0 12pt}
+  .letter-body .words{font-style:italic; color:#3a352f; font-size:10pt; margin:0 0 12pt}
 
   .letter-body table.terms{border-collapse:collapse; margin:6pt 0 12pt}
-  .letter-body table.terms td{padding:3pt 16pt 3pt 0; font-size:11.5pt; vertical-align:top}
+  .letter-body table.terms td{padding:3pt 16pt 3pt 0; font-size:10pt; vertical-align:top}
   .letter-body table.terms td.k{white-space:nowrap; color:#3a352f; font-weight:600}
 
-  .letter-body table.items{border-collapse:collapse; width:100%; margin:8pt 0 12pt; font-size:10.8pt}
+  .letter-body table.items{border-collapse:collapse; width:100%; margin:8pt 0 12pt; font-size:10pt}
   .letter-body table.items th, .letter-body table.items td{border:1px solid #cfc7ba; padding:5pt 8pt; text-align:left}
   .letter-body table.items th{background:#F3EFE8; font-weight:600}
 
   .sign-block{margin-top:26pt}
   .sign-block .for{margin-bottom:34pt}
-  .sign-line{width:62mm; border-top:1px solid #2a2620; padding-top:4pt; font-size:10.5pt}
+  .sign-line{width:62mm; border-top:1px solid #2a2620; padding-top:4pt; font-size:10pt}
 
   .letter-body table.sign-two{width:100%; border-collapse:collapse; margin-top:30pt}
   .letter-body table.sign-two td{width:50%; vertical-align:bottom; padding-right:16pt}
-  .letter-body table.sign-two .role{font-size:10.5pt; color:#3a352f; margin-bottom:30pt}
+  .letter-body table.sign-two .role{font-size:10pt; color:#3a352f; margin-bottom:30pt}
   .letter-body table.sign-two .sign-line{width:56mm}
 
   .lh-footer{margin-top:20pt}
   .lh-footer img{width:130mm; max-width:492px; height:auto; display:block}
+
+  /* nav + log view */
+  .nav{display:flex; gap:6px; margin-right:12px}
+  .navbtn{background:transparent; border:1px solid var(--line); color:var(--muted); padding:7px 14px; border-radius:9px; font-weight:600; font-size:13px; cursor:pointer}
+  .navbtn.active{background:var(--green); color:#fff; border-color:var(--green)}
+  .logwrap{max-width:1120px; margin:22px auto; padding:0 22px}
+  .chips{display:flex; flex-wrap:wrap; gap:8px}
+  .chip{font-size:12px; background:#F3EFE8; border:1px solid var(--line); border-radius:999px; padding:4px 10px; color:var(--ink)}
+  .chip.total{background:var(--green); color:#fff; border-color:var(--green)}
+  table.logtbl{width:100%; border-collapse:collapse; margin-top:8px; font-size:13px}
+  table.logtbl th, table.logtbl td{border:1px solid var(--line); padding:7px 9px; text-align:left; vertical-align:top}
+  table.logtbl th{background:#F3EFE8; font-weight:600}
+  table.logtbl tr.flag{background:#FBEEDD}
+  #issueMsg{font-size:12.5px; margin-top:8px; min-height:16px; color:var(--green)}
+  #issueMsg.err{color:#b23b1e}
+  .linkbox{background:#F3F6F1; border:1px solid #D5E4D8; border-radius:9px; padding:10px 12px; margin-bottom:12px}
 
   @media print{
     @page{size:A4; margin:0}
@@ -131,9 +148,14 @@
   <img id="brandLogo" alt="Maya" />
   <div class="titles"><h1>HR Letters</h1><div class="sub">Maya Tex Restaurants Company</div></div>
   <div class="spacer"></div>
+  <div class="nav no-print">
+    <button id="navGen" class="navbtn active">Generate</button>
+    <button id="navLog" class="navbtn">Log</button>
+  </div>
   <span id="connBadge" class="badge warn">Manual mode</span>
 </div>
 
+<div id="viewGenerate">
 <div class="wrap">
   <div class="panel no-print">
     <div class="phead"><h2>Generate a letter</h2></div>
@@ -167,6 +189,7 @@
       </div>
 
       <div id="dynFields"></div>
+      <div id="linkArea"></div>
 
       <div class="eyebrow">Letter details</div>
       <div class="row">
@@ -179,9 +202,11 @@
       </div>
 
       <div class="btnrow">
-        <button class="btn-green" id="btnPrint">Print / Save as PDF</button>
+        <button class="btn-green" id="btnIssue">Issue &amp; Print</button>
+        <button class="btn-ghost" id="btnPrint">Print draft</button>
         <button class="btn-ghost" id="btnReset">Reset</button>
       </div>
+      <div id="issueMsg"></div>
     </div>
   </div>
 
@@ -195,6 +220,21 @@
         <div class="letter-body" id="letterBody"></div>
         <div class="lh-footer"><img id="lhFooter" alt="" /></div>
       </div>
+    </div>
+  </div>
+</div>
+</div><!-- /viewGenerate -->
+
+<div id="viewLog" class="no-print" style="display:none">
+  <div class="logwrap">
+    <div class="panel">
+      <div class="phead">
+        <h2>Letters issued — log</h2>
+        <div class="spacer"></div>
+        <a id="logSheetLink" href="#" target="_blank" class="hint" style="display:none; margin-right:12px">Open sheet ↗</a>
+        <button id="logRefresh" class="btn-ghost" style="padding:6px 12px">Refresh</button>
+      </div>
+      <div class="pbody" id="logBody"></div>
     </div>
   </div>
 </div>
@@ -425,8 +465,149 @@ const LETTERS={
 /* =============================================================
    State + wiring
 ============================================================= */
-let ROSTER=[], manualFieldValues={};
+let ROSTER=[], manualFieldValues={}, linkedRef='', LOG=[], openIssuesCache=[];
 function currentLetter(){return LETTERS[$('letterType').value];}
+
+/* ---- backend helpers ---- */
+async function api(action,params){
+  let url=API_URL+(API_URL.includes('?')?'&':'?')+'action='+encodeURIComponent(action);
+  if(params) for(const k in params) url+='&'+k+'='+encodeURIComponent(params[k]);
+  const res=await fetch(url); return res.json();
+}
+async function apiPost(payload){
+  const res=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});
+  return res.json();
+}
+function setIssueMsg(t,err){const e=$('issueMsg');if(!e)return;e.textContent=t||'';e.className=err?'err':'';}
+
+/* provisional next reference for the current letter type */
+async function refreshRef(){
+  const L=currentLetter();
+  const year=(($('fDate').value.match(/(\d{4})\s*$/)||[])[1])||String(new Date().getFullYear());
+  if(!API_URL){$('fRef').value='MT/HR/'+L.code+'/'+year+'/001';return;}
+  try{const d=await api('nextRef',{code:L.code,year});if(d&&d.ok&&d.ref){$('fRef').value=d.ref;renderPreview();}}
+  catch(e){$('fRef').value='MT/HR/'+L.code+'/'+year+'/001';}
+}
+
+/* short human summary + machine meta stored in the log */
+function parseItemsShort(text){return String(text||'').split(/\r?\n/).map(l=>l.trim()).filter(Boolean).map(l=>l.split(/\s*[—|\t]\s*|\s+-\s+/)[0]).join(', ');}
+function letterDetail(key,d){
+  const money=v=>{const n=num(v);return isNaN(n)?'':'KD '+fmtKD(n);};
+  const tot=(a,b,c)=>{const t=num(c);return isNaN(t)?((num(a)||0)+(num(b)||0)):t;};
+  switch(key){
+    case 'salary_certificate': case 'salary_transfer':{const t=tot(d.basic,d.allowances,d.total);return t?('Salary '+money(t)):'';}
+    case 'salary_increment':{const t=tot(d.newBasic,d.newAllow,d.newTotal);return 'Revised'+(t?(' '+money(t)):'')+(d.effectiveDate?(' w.e.f. '+d.effectiveDate):'');}
+    case 'appointment_letter':{const t=tot(d.basic,d.allowances,d.total);return (d.position||d.fDesignation||'')+(t?(' · '+money(t)):'');}
+    case 'warning_letter':return (d.level||'First')+' warning'+(d.description?(': '+d.description.split('\n')[0].slice(0,60)):'');
+    case 'experience_certificate':return 'Served '+(d.fDoj||'')+' → '+(d.lastDay||'');
+    case 'noc':return d.purpose||'';
+    case 'employment_verification':return d.purpose||'Employment verified';
+    case 'resignation_acceptance':return 'Last day '+(d.lastDay||'');
+    case 'termination_letter':return 'w.e.f. '+(d.effectiveDate||'');
+    case 'passport_handover':return 'Passport '+(d.fPassport||'')+(d.reason?(' — '+d.reason):'');
+    case 'property_issue': case 'property_return':return parseItemsShort(d.items);
+    default:return '';
+  }
+}
+function letterMeta(key,d){
+  if(key==='property_issue'||key==='property_return')return {items:d.items||''};
+  if(key==='warning_letter')return {level:d.level||'First'};
+  return {};
+}
+
+/* issue = record in the log (gets the authoritative ref), then print */
+async function issueAndPrint(){
+  const d=collectData(),key=$('letterType').value,L=currentLetter();
+  if(!d.fName){setIssueMsg('Enter an employee name first.',true);return;}
+  if(!API_URL){window.print();return;}
+  setIssueMsg('Issuing…');
+  try{
+    const res=await apiPost({action:'issue',code:L.code,letterType:L.label,name:d.fName,civilId:d.fCivilId,
+      designation:d.fDesignation,issueDate:d.fDate,signatory:d.fSignatory,title:d.fSignTitle,
+      detail:letterDetail(key,d),meta:letterMeta(key,d),linkedRef:linkedRef||''});
+    if(res&&res.ok&&res.ref){
+      $('fRef').value=res.ref;renderPreview();setIssueMsg('Logged as '+res.ref+'. Opening print…');
+      const wasLinked=linkedRef;linkedRef='';
+      setTimeout(()=>window.print(),200);
+      if(L.code==='PRR'&&wasLinked)loadOpenIssues();
+    }else setIssueMsg('Could not log: '+((res&&res.error)||'unknown'),true);
+  }catch(e){setIssueMsg('Network error while logging.',true);}
+}
+
+/* property return: offer prior un-returned issues for this employee */
+async function loadOpenIssues(){
+  const area=$('linkArea');if(!area)return;
+  const L=currentLetter();
+  if(L.code!=='PRR'||!API_URL){area.innerHTML='';linkedRef='';return;}
+  const civ=$('fCivilId').value.trim();
+  if(!civ){area.innerHTML='<div class="linkbox hint">Select an employee to link a prior property issue.</div>';return;}
+  area.innerHTML='<div class="linkbox hint">Looking up issued property…</div>';
+  try{
+    const res=await api('openIssues',{civilId:civ});
+    if(res&&res.ok&&res.issues&&res.issues.length){
+      openIssuesCache=res.issues;
+      area.innerHTML='<div class="linkbox"><label>Link to issued property <span class="hint">(pre-fills items &amp; marks it returned)</span></label>'
+        +'<select id="linkIssue"><option value="">— none —</option>'
+        +res.issues.map((it,i)=>`<option value="${i}">${esc(it.ref)} · ${esc(it.issueDate)} · ${esc(it.detail||'')}</option>`).join('')
+        +'</select></div>';
+      $('linkIssue').addEventListener('change',e=>{
+        const it=openIssuesCache[+e.target.value];
+        if(it){linkedRef=it.ref;const ta=$('dyn_items');if(ta){ta.value=it.items||'';manualFieldValues.items=ta.value;}renderPreview();setIssueMsg('Return will be linked to '+it.ref+'.');}
+        else{linkedRef='';setIssueMsg('');}
+      });
+    }else area.innerHTML='<div class="linkbox hint">No open (un-returned) property found for this employee.</div>';
+  }catch(e){area.innerHTML='';}
+}
+
+/* ---- Log view ---- */
+function showView(v){
+  $('viewGenerate').style.display=v==='gen'?'':'none';
+  $('viewLog').style.display=v==='log'?'':'none';
+  $('navGen').classList.toggle('active',v==='gen');
+  $('navLog').classList.toggle('active',v==='log');
+  if(v==='log')loadLog();
+}
+async function loadLog(){
+  const host=$('logBody');
+  if(!API_URL){host.innerHTML='<div class="notice">Connect the backend to view the log.</div>';return;}
+  host.innerHTML='<div class="hint">Loading log…</div>';
+  try{const res=await api('log',{limit:1000});if(res&&res.ok){LOG=res.entries||[];renderLog();}else host.innerHTML='<div class="notice">Could not load the log.</div>';}
+  catch(e){host.innerHTML='<div class="notice">Network error loading the log.</div>';}
+}
+function renderLog(){
+  const host=$('logBody');
+  if(!LOG.length){host.innerHTML='<div class="hint">No letters logged yet. Issue one from the Generate tab and it will appear here.</div>';return;}
+  const byType={};LOG.forEach(e=>{byType[e.letterType]=(byType[e.letterType]||0)+1;});
+  const chips='<div class="chips"><span class="chip total">'+LOG.length+' issued</span>'
+    +Object.entries(byType).sort((a,b)=>b[1]-a[1]).map(([t,c])=>`<span class="chip">${esc(t)}: ${c}</span>`).join('')+'</div>';
+  const warn={};LOG.filter(e=>e.code==='WRN').forEach(e=>{(warn[e.name]=warn[e.name]||[]).push(e.ref);});
+  let warnBlock='';
+  if(Object.keys(warn).length){
+    warnBlock='<div class="eyebrow" style="margin-top:18px">Warnings by employee</div>'
+      +'<table class="logtbl"><thead><tr><th>Employee</th><th>Warnings</th><th>References</th></tr></thead><tbody>'
+      +Object.entries(warn).sort((a,b)=>b[1].length-a[1].length).map(([n,r])=>`<tr class="${r.length>1?'flag':''}"><td>${esc(n)}</td><td>${r.length}</td><td>${r.map(esc).join(', ')}</td></tr>`).join('')
+      +'</tbody></table>';
+  }
+  const types=[...new Set(LOG.map(e=>e.letterType))].sort();
+  const filter='<div class="row" style="margin-top:18px"><div class="fieldgroup"><label>Filter type</label><select id="logType"><option value="">All types</option>'
+    +types.map(t=>`<option>${esc(t)}</option>`).join('')+'</select></div>'
+    +'<div class="fieldgroup"><label>Search</label><input type="text" id="logSearch" placeholder="name / ref / detail" /></div></div>';
+  host.innerHTML=chips+warnBlock+filter+'<div id="logTableWrap"></div>';
+  $('logType').addEventListener('change',renderLogTable);
+  $('logSearch').addEventListener('input',renderLogTable);
+  renderLogTable();
+}
+function renderLogTable(){
+  const t=$('logType').value,q=($('logSearch').value||'').toLowerCase();
+  const rows=LOG.filter(e=>(!t||e.letterType===t)&&(!q||[e.name,e.ref,e.detail,e.civilId].join(' ').toLowerCase().includes(q)));
+  $('logTableWrap').innerHTML='<table class="logtbl"><thead><tr><th>Date</th><th>Ref</th><th>Type</th><th>Employee</th><th>Detail</th><th>Status</th></tr></thead><tbody>'
+    +rows.map(e=>`<tr><td>${esc(e.issueDate||e.timestamp)}</td><td>${esc(e.ref)}</td><td>${esc(e.letterType)}</td><td>${esc(e.name)}</td><td>${esc(e.detail||'')}</td><td>${esc(e.status||'')}</td></tr>`).join('')
+    +'</tbody></table>'+(rows.length?'':'<div class="hint" style="padding:8px 2px">No matching entries.</div>');
+}
+async function loadLogInfo(){
+  if(!API_URL)return;
+  try{const res=await api('logInfo');if(res&&res.ok&&res.url){const a=$('logSheetLink');a.href=res.url;a.style.display='';}}catch(e){}
+}
 
 function collectData(){
   const d={title:$('fTitle').value,fNationality:$('fNationality').value.trim(),fName:$('fName').value.trim(),
@@ -453,12 +634,14 @@ function renderDynFields(){
     host.appendChild(wrap);
   });
   (L.fields||[]).forEach(f=>{const el=$('dyn_'+f.key);el.addEventListener(f.type==='select'?'change':'input',e=>{manualFieldValues[f.key]=e.target.value;renderPreview();});});
-  $('fRef').value='MT/HR/'+L.code+'/'+new Date().getFullYear()+'/001';
+  refreshRef();
+  loadOpenIssues();
 }
 
 function fillFromEmployee(e){
   $('fName').value=e.name||'';$('fDesignation').value=e.designation||'';$('fDoj').value=e.dateOfJoin||'';
   $('fCivilId').value=e.civilId||'';$('fPassport').value=e.passportNo||'';renderPreview();
+  loadOpenIssues();
 }
 
 function initTypeahead(){
@@ -497,12 +680,16 @@ function init(){
   $('fDate').value=todayDDMMYYYY();
   ['fTitle','fNationality','fName','fDesignation','fDoj','fCivilId','fPassport','fRef','fDate','fSignatory','fSignTitle']
     .forEach(id=>$(id).addEventListener('input',renderPreview));
+  $('btnIssue').addEventListener('click',issueAndPrint);
   $('btnPrint').addEventListener('click',()=>window.print());
   $('btnReset').addEventListener('click',()=>{
     ['fNationality','fName','fDesignation','fDoj','fCivilId','fPassport','empSearch'].forEach(id=>$(id).value='');
     $('fSignatory').value='Abdulrehman Alnajar';$('fSignTitle').value='General Manager';
-    manualFieldValues={};$('fDate').value=todayDDMMYYYY();renderDynFields();renderPreview();});
-  initTypeahead();renderDynFields();renderPreview();loadRoster();
+    manualFieldValues={};linkedRef='';setIssueMsg('');$('fDate').value=todayDDMMYYYY();renderDynFields();renderPreview();});
+  $('navGen').addEventListener('click',()=>showView('gen'));
+  $('navLog').addEventListener('click',()=>showView('log'));
+  $('logRefresh').addEventListener('click',loadLog);
+  initTypeahead();renderDynFields();renderPreview();loadRoster();loadLogInfo();
 }
 document.addEventListener('DOMContentLoaded',init);
 </script>
