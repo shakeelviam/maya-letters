@@ -582,8 +582,8 @@ async function issueAndPrint(){
         const kb=Math.round(b64.length*0.75/1024);
         setIssueMsg('Logged as '+res.ref+'. PDF '+kb+' KB — uploading…');
         const save=await apiPost({action:'savePdf',ref:res.ref,filename:safeName,pdfBase64:b64});
-        if(save&&save.ok) setIssueMsg('Logged as '+res.ref+'. PDF saved ('+kb+' KB). Opening print…');
-        else setIssueMsg('Logged as '+res.ref+'. PDF save failed: '+((save&&save.error)||'unknown'),true);
+        if(save&&save.ok&&save.url) setIssueMsg('Logged as '+res.ref+'. PDF saved ('+kb+' KB). Opening print…');
+        else setIssueMsg('Logged as '+res.ref+'. PDF upload failed: '+((save&&save.error)||'no URL returned — is the backend redeployed?'),true);
       }catch(e){
         const msg=(e&&e.message)?e.message:String(e);
         setIssueMsg('Logged as '+res.ref+'. PDF capture failed — '+msg+'. Printing anyway.',true);
