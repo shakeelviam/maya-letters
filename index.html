@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Play:wght@400;700&family=Roboto:wght@400;500;700&family=Noto+Serif:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <style>
   :root{
     --terracotta:#DB5D3E; --terracotta-dark:#C24A2E;
@@ -480,6 +481,24 @@ async function apiPost(payload){
 }
 function setIssueMsg(t,err){const e=$('issueMsg');if(!e)return;e.textContent=t||'';e.className=err?'err':'';}
 
+/* Capture the visible .page as an A4 PDF and return its base64 (no data: prefix). */
+async function capturePagePdfBase64(){
+  if(typeof html2pdf==='undefined') throw new Error('PDF library not loaded');
+  await document.fonts.ready.catch(()=>{});
+  const page=$('page');
+  const opt={ margin:0, filename:'letter.pdf',
+    image:{ type:'jpeg', quality:0.98 },
+    html2canvas:{ scale:2, useCORS:true, backgroundColor:'#ffffff' },
+    jsPDF:{ unit:'mm', format:'a4', orientation:'portrait' } };
+  const blob=await html2pdf().set(opt).from(page).outputPdf('blob');
+  return await new Promise((resolve,reject)=>{
+    const r=new FileReader();
+    r.onload=()=>resolve(String(r.result).split(',')[1]);
+    r.onerror=()=>reject(new Error('read failed'));
+    r.readAsDataURL(blob);
+  });
+}
+
 /* provisional next reference for the current letter type */
 async function refreshRef(){
   const L=currentLetter();
@@ -526,8 +545,16 @@ async function issueAndPrint(){
       designation:d.fDesignation,issueDate:d.fDate,signatory:d.fSignatory,title:d.fSignTitle,
       detail:letterDetail(key,d),meta:letterMeta(key,d),linkedRef:linkedRef||''});
     if(res&&res.ok&&res.ref){
-      $('fRef').value=res.ref;renderPreview();setIssueMsg('Logged as '+res.ref+'. Opening print…');
+      $('fRef').value=res.ref;renderPreview();setIssueMsg('Logged as '+res.ref+'. Saving PDF…');
       const wasLinked=linkedRef;linkedRef='';
+      const safeName=res.ref.replace(/[\\/]/g,'-')+'.pdf';
+      try{
+        await new Promise(r=>setTimeout(r,80));   // let the DOM settle after the ref update
+        const b64=await capturePagePdfBase64();
+        const save=await apiPost({action:'savePdf',ref:res.ref,filename:safeName,pdfBase64:b64});
+        if(save&&save.ok) setIssueMsg('Logged as '+res.ref+'. PDF saved. Opening print…');
+        else setIssueMsg('Logged as '+res.ref+'. PDF save failed: '+((save&&save.error)||'unknown'),true);
+      }catch(e){ setIssueMsg('Logged as '+res.ref+'. PDF capture failed — printing anyway.',true); }
       setTimeout(()=>window.print(),200);
       if(L.code==='PRR'&&wasLinked)loadOpenIssues();
     }else setIssueMsg('Could not log: '+((res&&res.error)||'unknown'),true);
@@ -600,8 +627,12 @@ function renderLog(){
 function renderLogTable(){
   const t=$('logType').value,q=($('logSearch').value||'').toLowerCase();
   const rows=LOG.filter(e=>(!t||e.letterType===t)&&(!q||[e.name,e.ref,e.detail,e.civilId].join(' ').toLowerCase().includes(q)));
-  $('logTableWrap').innerHTML='<table class="logtbl"><thead><tr><th>Date</th><th>Ref</th><th>Type</th><th>Employee</th><th>Detail</th><th>Status</th></tr></thead><tbody>'
-    +rows.map(e=>`<tr><td>${esc(e.issueDate||e.timestamp)}</td><td>${esc(e.ref)}</td><td>${esc(e.letterType)}</td><td>${esc(e.name)}</td><td>${esc(e.detail||'')}</td><td>${esc(e.status||'')}</td></tr>`).join('')
+  $('logTableWrap').innerHTML='<table class="logtbl"><thead><tr><th>Date</th><th>Ref</th><th>Type</th><th>Employee</th><th>Detail</th><th>Status</th><th>PDF</th></tr></thead><tbody>'
+    +rows.map(e=>{
+      const link=e.pdfLink?(/^https?:\/\//.test(e.pdfLink)?e.pdfLink:''):'';
+      const pdfCell=link?`<a href="${esc(link)}" target="_blank">Open</a>`:(e.pdfLink?esc(e.pdfLink):'');
+      return `<tr><td>${esc(e.issueDate||e.timestamp)}</td><td>${esc(e.ref)}</td><td>${esc(e.letterType)}</td><td>${esc(e.name)}</td><td>${esc(e.detail||'')}</td><td>${esc(e.status||'')}</td><td>${pdfCell}</td></tr>`;
+    }).join('')
     +'</tbody></table>'+(rows.length?'':'<div class="hint" style="padding:8px 2px">No matching entries.</div>');
 }
 async function loadLogInfo(){
