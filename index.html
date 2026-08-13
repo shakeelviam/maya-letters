@@ -137,6 +137,17 @@ if(typeof html2pdf==='undefined'){
   #issueMsg.err{color:#b23b1e}
   .linkbox{background:#F3F6F1; border:1px solid #D5E4D8; border-radius:9px; padding:10px 12px; margin-bottom:12px}
 
+  /* Editable items grid (property forms) */
+  .items-form{width:100%; border-collapse:collapse; font-size:13px; margin-top:2px}
+  .items-form th{background:#F3EFE8; font-weight:600; padding:6px 8px; text-align:left; font-size:11.5px; color:var(--ink)}
+  .items-form td{padding:3px 4px; vertical-align:middle}
+  .items-form td.n{text-align:center; color:var(--muted); width:22px; padding:0 2px; font-size:12px}
+  .items-form input, .items-form select{padding:6px 8px; font-size:13px}
+  .items-form .rmrow{background:#fff; color:#b23b1e; border:1px solid var(--line); border-radius:6px; width:28px; height:28px; padding:0; font-size:14px; cursor:pointer; line-height:1}
+  .items-form .rmrow:hover{background:#FBEEDD; border-color:#F0D8B4}
+  .addrow{background:#fff; color:var(--green); border:1px dashed var(--line); border-radius:8px; padding:6px 12px; font-size:13px; font-weight:600; cursor:pointer; margin-top:6px}
+  .addrow:hover{border-color:var(--green); background:#F3F6F1}
+
   @media print{
     @page{size:A4; margin:0}
     body{background:#fff}
@@ -274,7 +285,23 @@ function REF(d){return `<table class="refline"><tr><td class="l">Ref: ${esc(d.fR
 function SUBJ(t){return `<p class="subject">${esc(t)}</p>`;}
 function idClause(d){const pass=d.fPassport?` and Passport No. <b>${esc(d.fPassport)}</b>`:'';const nat=d.fNationality?`, a ${esc(d.fNationality)} national,`:',';return `holding Civil ID No. <b>${esc(d.fCivilId)}</b>${pass}${nat}`;}
 function salaryBlock(basicRaw,allowRaw,totalRaw,label){label=label||'Total Monthly Salary';let basic=num(basicRaw),allow=num(allowRaw),total=num(totalRaw);if(isNaN(total))total=(isNaN(basic)?0:basic)+(isNaN(allow)?0:allow);let rows='';if(!isNaN(basic))rows+=`<tr><td>Basic Salary</td><td class="amt">KD ${fmtKD(basic)}</td></tr>`;if(!isNaN(allow)&&allow>0)rows+=`<tr><td>Allowances</td><td class="amt">KD ${fmtKD(allow)}</td></tr>`;if(!rows&&(isNaN(total)||total<=0))return '';return `<table class="salary-tbl">${rows}<tr class="total"><td>${esc(label)}</td><td class="amt">KD ${fmtKD(total||0)}</td></tr></table>${total>0?`<p class="words">(${esc(kdWords(total))})</p>`:''}`;}
-function itemsTable(text){const lines=String(text||'').split(/\r?\n/).map(l=>l.trim()).filter(Boolean);if(!lines.length)return '<p><i>[No items entered — one per line: Item — Make/Model — Serial/Plate]</i></p>';const rows=lines.map((l,i)=>{const p=l.split(/\s*[—|\t]\s*|\s+-\s+/).map(x=>x.trim());return `<tr><td>${i+1}</td><td>${esc(p[0]||'')}</td><td>${esc(p[1]||'')}</td><td>${esc(p[2]||'')}</td></tr>`;}).join('');return `<table class="items"><thead><tr><th>#</th><th>Item</th><th>Make / Model</th><th>Serial / Plate / IMEI</th></tr></thead><tbody>${rows}</tbody></table>`;}
+function emptyItemRow(){return {item:'',mm:'',serial:'',condition:'Good'};}
+function normalizeItems(v){
+  if(Array.isArray(v))return v.filter(r=>r&&(r.item||r.mm||r.serial));
+  if(typeof v==='string'&&v.trim()){
+    return v.split(/\r?\n/).map(l=>l.trim()).filter(Boolean).map(l=>{
+      const p=l.split(/\s*[—|\t]\s*|\s+-\s+/).map(x=>x.trim());
+      return {item:p[0]||'',mm:p[1]||'',serial:p[2]||'',condition:'Good'};
+    });
+  }
+  return [];
+}
+function itemsTable(items){
+  const rows=normalizeItems(items);
+  if(!rows.length)return '<p><i>[No items entered]</i></p>';
+  const trs=rows.map((r,i)=>`<tr><td>${i+1}</td><td>${esc(r.item||'')}</td><td>${esc(r.mm||'')}</td><td>${esc(r.serial||'')}</td><td>${esc(r.condition||'')}</td></tr>`).join('');
+  return `<table class="items"><thead><tr><th>#</th><th>Item</th><th>Make / Model</th><th>Serial / Plate / IMEI</th><th>Condition</th></tr></thead><tbody>${trs}</tbody></table>`;
+}
 function companySign(d,lead){const l=lead?`${esc(lead)} — For <b>Maya Tex Restaurants Company</b>,`:`For <b>Maya Tex Restaurants Company</b>,`;return `<div class="sign-block"><p class="for">${l}</p><div class="sign-line">${esc(d.fSignatory||'Abdulrehman Alnajar')}<br>${esc(d.fSignTitle||'General Manager')}</div></div>`;}
 function twoSign(d,empRole,compLead){return `<table class="sign-two"><tr><td><div class="role">${esc(empRole)}:</div><div class="sign-line">${d.title} ${esc(d.fName)}<br>Civil ID: ${esc(d.fCivilId)}</div></td><td><div class="role">${compLead?esc(compLead)+' — ':''}For Maya Tex Restaurants Company,</div><div class="sign-line">${esc(d.fSignatory||'Abdulrehman Alnajar')}<br>${esc(d.fSignTitle||'General Manager')}</div></td></tr></table>`;}
 
@@ -445,7 +472,7 @@ const LETTERS={
   property_issue:{code:'PRI',label:'Company Property Issue Form',
     fields:[
       {key:'issueDate',label:'Issue date',type:'date',def:'today'},
-      {key:'items',label:'Items issued',type:'textarea',placeholder:'One per line:\nLaptop — Dell Latitude 5420 — SN 7X3K9\nMobile — iPhone 13 — IMEI 35xxxx\nVehicle — Toyota Hiace — Plate 12/34567',hint:'one per line: Item — Make/Model — Serial/Plate'},
+      {key:'items',label:'Items issued',type:'items'},
       {key:'notes',label:'Notes',type:'text',placeholder:'optional',hint:'optional'}],
     render(d){
       return `${REF(d)}${SUBJ('COMPANY PROPERTY — ISSUE / RECEIPT')}
@@ -458,7 +485,7 @@ const LETTERS={
   property_return:{code:'PRR',label:'Company Property Return / Handover Form',
     fields:[
       {key:'returnDate',label:'Return date',type:'date',def:'today'},
-      {key:'items',label:'Items returned',type:'textarea',placeholder:'One per line: Item — Make/Model — Serial/Plate',hint:'one per line: Item — Make/Model — Serial/Plate'},
+      {key:'items',label:'Items returned',type:'items'},
       {key:'condition',label:'Overall condition',type:'select',options:['Good','Fair','Damaged','See notes']},
       {key:'notes',label:'Notes',type:'text',placeholder:'optional',hint:'optional'}],
     render(d){
@@ -552,7 +579,7 @@ async function refreshRef(){
 }
 
 /* short human summary + machine meta stored in the log */
-function parseItemsShort(text){return String(text||'').split(/\r?\n/).map(l=>l.trim()).filter(Boolean).map(l=>l.split(/\s*[—|\t]\s*|\s+-\s+/)[0]).join(', ');}
+function parseItemsShort(items){const arr=normalizeItems(items);return arr.map(r=>r.item).filter(Boolean).join(', ');}
 function letterDetail(key,d){
   const money=v=>{const n=num(v);return isNaN(n)?'':'KD '+fmtKD(n);};
   const tot=(a,b,c)=>{const t=num(c);return isNaN(t)?((num(a)||0)+(num(b)||0)):t;};
@@ -628,8 +655,14 @@ async function loadOpenIssues(){
         +'</select></div>';
       $('linkIssue').addEventListener('change',e=>{
         const it=openIssuesCache[+e.target.value];
-        if(it){linkedRef=it.ref;const ta=$('dyn_items');if(ta){ta.value=it.items||'';manualFieldValues.items=ta.value;}renderPreview();setIssueMsg('Return will be linked to '+it.ref+'.');}
-        else{linkedRef='';setIssueMsg('');}
+        if(it){
+          linkedRef=it.ref;
+          const arr=normalizeItems(it.items);
+          manualFieldValues.items=arr.length?arr:[emptyItemRow()];
+          if($('items_items')) renderItemsGrid('items');
+          renderPreview();
+          setIssueMsg('Return will be linked to '+it.ref+'.');
+        } else { linkedRef=''; setIssueMsg(''); }
       });
     }else area.innerHTML='<div class="linkbox hint">No open (un-returned) property found for this employee.</div>';
   }catch(e){area.innerHTML='';}
@@ -694,10 +727,46 @@ function collectData(){
     fDesignation:$('fDesignation').value.trim(),fDoj:$('fDoj').value.trim(),fCivilId:$('fCivilId').value.trim(),
     fPassport:$('fPassport').value.trim(),fRef:$('fRef').value.trim(),fDate:$('fDate').value.trim(),
     fSignatory:$('fSignatory').value.trim(),fSignTitle:$('fSignTitle').value.trim()};
-  (currentLetter().fields||[]).forEach(f=>{const el=$('dyn_'+f.key);d[f.key]=el?el.value.trim():'';});
+  (currentLetter().fields||[]).forEach(f=>{
+    if(f.type==='items'){ d[f.key]=manualFieldValues[f.key]||[]; return; }
+    const el=$('dyn_'+f.key);d[f.key]=el?el.value.trim():'';
+  });
   return d;
 }
 function renderPreview(){ $('letterBody').innerHTML=currentLetter().render(collectData()); }
+
+/* Editable items grid — renders the mini-table for the property forms */
+function renderItemsGrid(key){
+  const arr=manualFieldValues[key]||[];
+  const cond=['New','Good','Fair','Used','Damaged'];
+  const html='<table class="items-form"><thead><tr><th>#</th><th>Item</th><th>Make/Model</th><th>Serial/Plate/IMEI</th><th>Condition</th><th></th></tr></thead><tbody>'+
+    arr.map((r,i)=>`<tr>
+      <td class="n">${i+1}</td>
+      <td><input type="text" data-k="item" data-i="${i}" value="${esc(r.item||'')}" placeholder="Laptop" /></td>
+      <td><input type="text" data-k="mm" data-i="${i}" value="${esc(r.mm||'')}" placeholder="Dell Latitude 5420" /></td>
+      <td><input type="text" data-k="serial" data-i="${i}" value="${esc(r.serial||'')}" placeholder="SN / Plate / IMEI" /></td>
+      <td><select data-k="condition" data-i="${i}">${cond.map(c=>`<option${(r.condition||'Good')===c?' selected':''}>${c}</option>`).join('')}</select></td>
+      <td><button type="button" class="rmrow" data-i="${i}" title="Remove row">✕</button></td>
+    </tr>`).join('')+
+    '</tbody></table>';
+  const host=$('items_'+key); host.innerHTML=html;
+  host.querySelectorAll('[data-k]').forEach(el=>{
+    const ev=el.tagName==='SELECT'?'change':'input';
+    el.addEventListener(ev,e=>{
+      const i=+e.target.dataset.i, k=e.target.dataset.k;
+      manualFieldValues[key][i][k]=e.target.value;
+      renderPreview();
+    });
+  });
+  host.querySelectorAll('.rmrow').forEach(btn=>{
+    btn.addEventListener('click',e=>{
+      const i=+e.currentTarget.dataset.i;
+      manualFieldValues[key].splice(i,1);
+      if(!manualFieldValues[key].length) manualFieldValues[key].push(emptyItemRow());
+      renderItemsGrid(key); renderPreview();
+    });
+  });
+}
 
 function renderDynFields(){
   const L=currentLetter(),host=$('dynFields');
@@ -705,6 +774,14 @@ function renderDynFields(){
   (L.fields||[]).forEach(f=>{
     const wrap=document.createElement('div');wrap.className='fieldgroup';
     let val=manualFieldValues[f.key];
+    if(f.type==='items'){
+      if(!Array.isArray(val)||!val.length){ val=[emptyItemRow()]; manualFieldValues[f.key]=val; }
+      wrap.innerHTML=`<label>${esc(f.label)} ${f.hint?`<span class="hint">(${esc(f.hint)})</span>`:''}</label>`
+        +`<div id="items_${f.key}"></div>`
+        +`<button type="button" class="addrow" id="addRow_${f.key}">+ Add row</button>`;
+      host.appendChild(wrap);
+      return;
+    }
     if(val==null)val=(f.def==='today'?todayDDMMYYYY():(f.def||''));
     let ctrl;
     if(f.type==='textarea')ctrl=`<textarea id="dyn_${f.key}" placeholder="${esc(f.placeholder||'')}">${esc(val)}</textarea>`;
@@ -713,7 +790,17 @@ function renderDynFields(){
     wrap.innerHTML=`<label>${esc(f.label)} ${f.hint?`<span class="hint">(${esc(f.hint)})</span>`:''}</label>${ctrl}`;
     host.appendChild(wrap);
   });
-  (L.fields||[]).forEach(f=>{const el=$('dyn_'+f.key);el.addEventListener(f.type==='select'?'change':'input',e=>{manualFieldValues[f.key]=e.target.value;renderPreview();});});
+  (L.fields||[]).forEach(f=>{
+    if(f.type==='items'){
+      renderItemsGrid(f.key);
+      $('addRow_'+f.key).addEventListener('click',()=>{
+        manualFieldValues[f.key].push(emptyItemRow()); renderItemsGrid(f.key); renderPreview();
+      });
+      return;
+    }
+    const el=$('dyn_'+f.key);
+    el.addEventListener(f.type==='select'?'change':'input',e=>{manualFieldValues[f.key]=e.target.value;renderPreview();});
+  });
   refreshRef();
   loadOpenIssues();
 }
