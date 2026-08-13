@@ -483,8 +483,24 @@ async function api(action,params){
   const res=await fetch(url); return res.json();
 }
 async function apiPost(payload){
-  const res=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});
-  return res.json();
+  async function once(){
+    // FormData (multipart) is much more reliable than text/plain JSON on
+    // Apps Script's redirect chain, especially for larger payloads (PDFs).
+    const form=new FormData();
+    form.append('payload',JSON.stringify(payload));
+    const res=await fetch(API_URL,{method:'POST',body:form,redirect:'follow'});
+    const text=await res.text();
+    try{ return JSON.parse(text); }
+    catch(e){
+      const snippet=text.replace(/<[^>]+>/g,'').replace(/\s+/g,' ').trim().slice(0,140);
+      throw new Error('Server returned non-JSON (HTTP '+res.status+'): '+snippet);
+    }
+  }
+  try{ return await once(); }
+  catch(e){
+    await new Promise(r=>setTimeout(r,400));
+    return await once();
+  }
 }
 function setIssueMsg(t,err){const e=$('issueMsg');if(!e)return;e.textContent=t||'';e.className=err?'err':'';}
 
@@ -504,14 +520,13 @@ async function capturePagePdfBase64(){
   const page=$('page');
   if(!page) throw new Error('preview element (#page) not found');
 
-  // A4 in pixels at 96dpi: 794 x 1123. Force the capture to that size so
-  // html2canvas doesn't try to render millimetre-based CSS at oddly large sizes.
+  // Keep the payload small — Apps Script POST redirects get flaky above ~150 KB base64.
   const opt={
     margin:0,
     filename:'letter.pdf',
-    image:{ type:'jpeg', quality:0.95 },
+    image:{ type:'jpeg', quality:0.82 },
     html2canvas:{
-      scale:2, useCORS:true, backgroundColor:'#ffffff',
+      scale:1.5, useCORS:true, backgroundColor:'#ffffff',
       windowWidth:794, windowHeight:1123, scrollX:0, scrollY:0, logging:false
     },
     jsPDF:{ unit:'mm', format:'a4', orientation:'portrait', compress:true },
