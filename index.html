@@ -511,11 +511,17 @@ async function api(action,params){
 }
 async function apiPost(payload){
   async function once(){
-    // FormData (multipart) is much more reliable than text/plain JSON on
-    // Apps Script's redirect chain, especially for larger payloads (PDFs).
-    const form=new FormData();
-    form.append('payload',JSON.stringify(payload));
-    const res=await fetch(API_URL,{method:'POST',body:form,redirect:'follow'});
+    // application/x-www-form-urlencoded is a safelisted content type (no CORS
+    // preflight) AND is the format Apps Script parses most reliably into
+    // e.parameter — the multipart/form-data path is currently flaky with
+    // Google's script.googleusercontent.com redirect chain.
+    const body='payload='+encodeURIComponent(JSON.stringify(payload));
+    const res=await fetch(API_URL,{
+      method:'POST',
+      headers:{'Content-Type':'application/x-www-form-urlencoded;charset=utf-8'},
+      body:body,
+      redirect:'follow'
+    });
     const text=await res.text();
     try{ return JSON.parse(text); }
     catch(e){
@@ -525,7 +531,7 @@ async function apiPost(payload){
   }
   try{ return await once(); }
   catch(e){
-    await new Promise(r=>setTimeout(r,400));
+    await new Promise(r=>setTimeout(r,600));
     return await once();
   }
 }
