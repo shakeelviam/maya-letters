@@ -394,7 +394,63 @@ const LETTERS={
       <p>All other terms and conditions of your employment remain unchanged. We look forward to your continued dedication and contribution.</p>
       ${companySign(d)}`;}},
 
-  appointment_letter:{code:'APT',label:'Appointment / Offer Letter',
+  offer_letter:{code:'OFL',label:'Offer Letter',
+    fields:[
+      {key:'candidateAddress',label:'Candidate address',type:'textarea',placeholder:'e.g. Dhaka, Bangladesh',hint:'optional — line under the name'},
+      {key:'position',label:'Position offered',type:'text',placeholder:'defaults to designation',hint:'blank = use designation'},
+      {key:'department',label:'Department',type:'text',placeholder:'e.g. Kitchen',hint:'optional'},
+      {key:'reportingTo',label:'Reporting to',type:'text',placeholder:'e.g. Head Chef',hint:'optional'},
+      {key:'joiningDate',label:'Proposed joining date',type:'date',def:'today'},
+      {key:'location',label:'Place of work',type:'text',def:'Kuwait'},
+      {key:'probation',label:'Probation period',type:'select',options:['3 months','6 months','None']},
+      {key:'workingHours',label:'Working hours',type:'text',def:'48 hours per week, as per shift roster'},
+      {key:'basic',label:'Basic salary (KD)',type:'text',placeholder:'e.g. 250.000'},
+      {key:'housing',label:'Housing allowance (KD)',type:'text',placeholder:'optional',hint:'optional'},
+      {key:'transport',label:'Transport allowance (KD)',type:'text',placeholder:'optional',hint:'optional'},
+      {key:'food',label:'Food allowance (KD)',type:'text',placeholder:'optional',hint:'optional'},
+      {key:'otherAllow',label:'Other allowances (KD)',type:'text',placeholder:'optional',hint:'optional'},
+      {key:'total',label:'Total monthly salary (KD)',type:'text',placeholder:'auto if blank',hint:'auto = sum of above'},
+      {key:'annualLeave',label:'Annual leave',type:'text',def:'30 calendar days per year, as per Kuwait Labour Law'},
+      {key:'airTicket',label:'Air ticket',type:'text',def:'Once every two years, as per Company policy'},
+      {key:'medical',label:'Medical insurance',type:'text',def:'As per Company policy'},
+      {key:'noticePeriod',label:'Notice period',type:'text',def:'3 months, in accordance with the Kuwait Labour Law'},
+      {key:'acceptanceDays',label:'Acceptance window (days)',type:'text',def:'7'}],
+    render(d){
+      const pos=d.position||d.fDesignation||'';
+      const basic=num(d.basic),housing=num(d.housing),transport=num(d.transport),food=num(d.food),other=num(d.otherAllow);
+      let t=num(d.total);
+      if(isNaN(t))t=[basic,housing,transport,food,other].filter(v=>!isNaN(v)).reduce((s,v)=>s+v,0);
+      const salRow=(k,v)=>(!isNaN(v)&&v>0)?`<tr><td class="k">${esc(k)}</td><td>KD ${fmtKD(v)}</td></tr>`:'';
+      const addr=d.candidateAddress?`<p class="addr">${esc(d.title)} ${esc(d.fName)}\n${esc(d.candidateAddress)}</p>`:`<p class="addr">${esc(d.title)} ${esc(d.fName)}</p>`;
+      return `${REF(d)}${addr}${SUBJ('LETTER OF OFFER \u2014 '+(pos||'').toUpperCase())}
+      <p>Dear ${d.title} ${esc(d.fName)},</p>
+      <p>Following our discussions and interview, we are pleased to offer you the position of <b>${esc(pos)}</b> with <b>Maya Tex Restaurants Company</b> on the following terms and conditions:</p>
+      <table class="terms">
+        <tr><td class="k">Position</td><td>${esc(pos)}</td></tr>
+        ${d.department?`<tr><td class="k">Department</td><td>${esc(d.department)}</td></tr>`:''}
+        ${d.reportingTo?`<tr><td class="k">Reporting to</td><td>${esc(d.reportingTo)}</td></tr>`:''}
+        <tr><td class="k">Date of Joining</td><td>${esc(d.joiningDate)} (proposed)</td></tr>
+        <tr><td class="k">Place of Work</td><td>${esc(d.location||'Kuwait')}</td></tr>
+        <tr><td class="k">Probation Period</td><td>${esc(d.probation||'3 months')}</td></tr>
+        <tr><td class="k">Working Hours</td><td>${esc(d.workingHours||'48 hours per week')}</td></tr>
+        ${salRow('Basic Salary',basic)}
+        ${salRow('Housing Allowance',housing)}
+        ${salRow('Transport Allowance',transport)}
+        ${salRow('Food Allowance',food)}
+        ${salRow('Other Allowances',other)}
+        <tr><td class="k">Total Monthly Salary</td><td><b>KD ${fmtKD(t)}</b>${t>0?` <span style="color:#3a352f">(${esc(kdWords(t))})</span>`:''}</td></tr>
+        <tr><td class="k">Annual Leave</td><td>${esc(d.annualLeave)}</td></tr>
+        <tr><td class="k">Air Ticket</td><td>${esc(d.airTicket)}</td></tr>
+        <tr><td class="k">Medical Insurance</td><td>${esc(d.medical)}</td></tr>
+        <tr><td class="k">Notice Period</td><td>${esc(d.noticePeriod)}</td></tr>
+        <tr><td class="k">End-of-Service</td><td>As per the Kuwait Labour Law (Law No. 6 of 2010)</td></tr>
+      </table>
+      <p>Your employment shall be governed by the provisions of the <b>Kuwait Labour Law (Law No. 6 of 2010)</b> and the Company's policies and rules as amended from time to time. This offer is subject to: (i) satisfactory completion of the probation period, (ii) successful transfer or issue of your residency (Article 18 work permit), (iii) satisfactory medical fitness, and (iv) verification of your educational and professional credentials.</p>
+      <p>You undertake to maintain the confidentiality of all Company information, trade secrets, recipes, supplier lists, financial data, and any other proprietary matter, both during and after the term of your employment with the Company.</p>
+      <p>If the above terms are acceptable to you, kindly sign and return a copy of this letter within <b>${esc(d.acceptanceDays||'7')}</b> days from the date hereof, failing which this offer shall stand automatically withdrawn.</p>
+      ${twoSign(d,'Accepted by (Candidate)','Offered by')}`;}},
+
+  appointment_letter:{code:'APT',label:'Appointment Letter',
     fields:[
       {key:'position',label:'Position offered',type:'text',placeholder:'defaults to designation',hint:'leave blank to use designation'},
       {key:'joiningDate',label:'Date of joining',type:'date',def:'today'},
@@ -593,6 +649,11 @@ function letterDetail(key,d){
     case 'salary_certificate': case 'salary_transfer':{const t=tot(d.basic,d.allowances,d.total);return t?('Salary '+money(t)):'';}
     case 'salary_increment':{const t=tot(d.newBasic,d.newAllow,d.newTotal);return 'Revised'+(t?(' '+money(t)):'')+(d.effectiveDate?(' w.e.f. '+d.effectiveDate):'');}
     case 'appointment_letter':{const t=tot(d.basic,d.allowances,d.total);return (d.position||d.fDesignation||'')+(t?(' · '+money(t)):'');}
+    case 'offer_letter':{
+      const parts=[num(d.basic),num(d.housing),num(d.transport),num(d.food),num(d.otherAllow)].filter(v=>!isNaN(v));
+      let t=num(d.total); if(isNaN(t)) t=parts.reduce((s,v)=>s+v,0);
+      return 'Offer: '+(d.position||d.fDesignation||'')+(t?(' · '+money(t)):'');
+    }
     case 'warning_letter':return (d.level||'First')+' warning'+(d.description?(': '+d.description.split('\n')[0].slice(0,60)):'');
     case 'experience_certificate':return 'Served '+(d.fDoj||'')+' → '+(d.lastDay||'');
     case 'noc':return d.purpose||'';
