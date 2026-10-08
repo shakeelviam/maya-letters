@@ -420,8 +420,12 @@ const LETTERS={
       const basic=num(d.basic),housing=num(d.housing),transport=num(d.transport),food=num(d.food),other=num(d.otherAllow);
       let t=num(d.total);
       if(isNaN(t))t=[basic,housing,transport,food,other].filter(v=>!isNaN(v)).reduce((s,v)=>s+v,0);
-      const salRow=(k,v)=>(!isNaN(v)&&v>0)?`<tr><td class="k">${esc(k)}</td><td>KD ${fmtKD(v)}</td></tr>`:'';
-      const addr=d.candidateAddress?`<p class="addr">${esc(d.title)} ${esc(d.fName)}\n${esc(d.candidateAddress)}</p>`:`<p class="addr">${esc(d.title)} ${esc(d.fName)}</p>`;
+      const salRow=(k,v,raw)=>{
+        if(!isNaN(v)&&v>0)return `<tr><td class="k">${esc(k)}</td><td>KD ${fmtKD(v)}</td></tr>`;
+        const s=String(raw==null?'':raw).trim();
+        return s?`<tr><td class="k">${esc(k)}</td><td>${esc(s)}</td></tr>`:'';
+      };
+      const addr=d.candidateAddress?`<p class="addr">${esc(d.title)} ${esc(d.fName)}\n${esc(d.candidateAddress)}</p>`:'';
       return `${REF(d)}${addr}${SUBJ('LETTER OF OFFER \u2014 '+(pos||'').toUpperCase())}
       <p>Dear ${d.title} ${esc(d.fName)},</p>
       <p>Following our discussions and interview, we are pleased to offer you the position of <b>${esc(pos)}</b> with <b>Maya Tex Restaurants Company</b> on the following terms and conditions:</p>
@@ -433,11 +437,11 @@ const LETTERS={
         <tr><td class="k">Place of Work</td><td>${esc(d.location||'Kuwait')}</td></tr>
         <tr><td class="k">Probation Period</td><td>${esc(d.probation||'3 months')}</td></tr>
         <tr><td class="k">Working Hours</td><td>${esc(d.workingHours||'48 hours per week')}</td></tr>
-        ${salRow('Basic Salary',basic)}
-        ${salRow('Housing Allowance',housing)}
-        ${salRow('Transport Allowance',transport)}
-        ${salRow('Food Allowance',food)}
-        ${salRow('Other Allowances',other)}
+        ${salRow('Basic Salary',basic,d.basic)}
+        ${salRow('Housing Allowance',housing,d.housing)}
+        ${salRow('Transport Allowance',transport,d.transport)}
+        ${salRow('Food Allowance',food,d.food)}
+        ${salRow('Other Allowances',other,d.otherAllow)}
         <tr><td class="k">Total Monthly Salary</td><td><b>KD ${fmtKD(t)}</b>${t>0?` <span style="color:#3a352f">(${esc(kdWords(t))})</span>`:''}</td></tr>
         <tr><td class="k">Annual Leave</td><td>${esc(d.annualLeave)}</td></tr>
         <tr><td class="k">Air Ticket</td><td>${esc(d.airTicket)}</td></tr>
