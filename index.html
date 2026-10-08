@@ -303,7 +303,11 @@ function itemsTable(items){
   return `<table class="items"><thead><tr><th>#</th><th>Item</th><th>Make / Model</th><th>Serial / Plate / IMEI</th><th>Condition</th></tr></thead><tbody>${trs}</tbody></table>`;
 }
 function companySign(d,lead){const l=lead?`${esc(lead)} — For <b>Maya Tex Restaurants Company</b>,`:`For <b>Maya Tex Restaurants Company</b>,`;return `<div class="sign-block"><p class="for">${l}</p><div class="sign-line">${esc(d.fSignatory||'Abdulrehman Alnajar')}<br>${esc(d.fSignTitle||'General Manager')}</div></div>`;}
-function twoSign(d,empRole,compLead){return `<table class="sign-two"><tr><td><div class="role">${esc(empRole)}:</div><div class="sign-line">${d.title} ${esc(d.fName)}<br>Civil ID: ${esc(d.fCivilId)}</div></td><td><div class="role">${compLead?esc(compLead)+' — ':''}For Maya Tex Restaurants Company,</div><div class="sign-line">${esc(d.fSignatory||'Abdulrehman Alnajar')}<br>${esc(d.fSignTitle||'General Manager')}</div></td></tr></table>`;}
+function signId(d){const civ=String(d.fCivilId==null?'':d.fCivilId).trim(),pas=String(d.fPassport==null?'':d.fPassport).trim();
+  if(civ&&pas)return `Civil ID: ${esc(civ)}<br>Passport No.: ${esc(pas)}`;
+  if(pas)return `Passport No.: ${esc(pas)}`;
+  return `Civil ID: ${esc(civ)}`;}
+function twoSign(d,empRole,compLead){return `<table class="sign-two"><tr><td><div class="role">${esc(empRole)}:</div><div class="sign-line">${d.title} ${esc(d.fName)}<br>${signId(d)}</div></td><td><div class="role">${compLead?esc(compLead)+' — ':''}For Maya Tex Restaurants Company,</div><div class="sign-line">${esc(d.fSignatory||'Abdulrehman Alnajar')}<br>${esc(d.fSignTitle||'General Manager')}</div></td></tr></table>`;}
 
 /* =============================================================
    LETTER REGISTRY — all types. Each render(d) returns body HTML.
