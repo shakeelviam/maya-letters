@@ -79,46 +79,57 @@ if(typeof html2pdf==='undefined'){
   .preview-toolbar .t{font-size:12px; color:var(--muted)}
   .paper-scroll{overflow:auto; border-radius:14px}
 
-  .page{background:#fff; color:#141210; width:210mm; min-height:297mm; margin:0 auto; padding:25.4mm; box-shadow:var(--shadow); display:flex; flex-direction:column; font-family:'Noto Serif',Georgia,serif}
-  @media (max-width:900px){ .page{width:100%; min-height:auto; padding:16mm 12mm} }
+  /* PAGE — reserves top space for header, bottom space for footer */
+  .page{
+    background:#fff; color:#141210;
+    width:210mm; min-height:297mm;
+    margin:0 auto;
+    padding:20mm 25.4mm 42mm;
+    box-shadow:var(--shadow);
+    display:flex; flex-direction:column;
+    font-family:'Noto Serif',Georgia,serif;
+  }
+  @media (max-width:900px){ .page{width:100%; min-height:auto; padding:16mm 12mm 36mm} }
 
-  /* extra padding between letterhead and body — applies to every letter */
-  .lh-header{margin-bottom:34pt}
+  /* Letterhead — tighter bottom margin so letters fit one page */
+  .lh-header{flex:none; margin:0 0 14pt; padding-bottom:6pt; border-bottom:1px solid #EFE9DF}
   .lh-header img{width:58mm; max-width:220px; height:auto; display:block}
 
-  .letter-body{flex:1; font-size:10pt; line-height:1.6; color:#1b1916; text-align:justify}
+  /* Body — fills between header and footer; never touches footer */
+  .letter-body{flex:1; font-size:10pt; line-height:1.5; color:#1b1916; text-align:justify; padding-bottom:4pt}
   .letter-body table{text-align:left}
-  .letter-body table.refline{width:100%; border-collapse:collapse; font-size:10pt; color:#3a352f; margin:0 0 22pt}
+  .letter-body table.refline{width:100%; border-collapse:collapse; font-size:10pt; color:#3a352f; margin:0 0 14pt}
   .letter-body table.refline td.l{text-align:left}
   .letter-body table.refline td.r{text-align:right}
-  .letter-body .subject{font-weight:600; text-align:center; text-decoration:underline; text-underline-offset:3px; margin:6pt 0 18pt; font-size:12pt}
-  .letter-body p{margin:0 0 11pt}
-  .letter-body .addr{margin:0 0 14pt; white-space:pre-line}
+  .letter-body .subject{font-weight:600; text-align:center; text-decoration:underline; text-underline-offset:3px; margin:4pt 0 12pt; font-size:12pt}
+  .letter-body p{margin:0 0 8pt}
+  .letter-body .addr{margin:0 0 10pt; white-space:pre-line}
 
-  .letter-body .salary-tbl{border-collapse:collapse; margin:6pt 0 10pt; width:auto; min-width:62%}
-  .letter-body .salary-tbl td{padding:5pt 14pt 5pt 0; font-size:10pt}
+  .letter-body .salary-tbl{border-collapse:collapse; margin:4pt 0 8pt; width:auto; min-width:62%}
+  .letter-body .salary-tbl td{padding:4pt 14pt 4pt 0; font-size:10pt}
   .letter-body .salary-tbl td.amt{text-align:right; font-variant-numeric:tabular-nums}
-  .letter-body .salary-tbl tr.total td{border-top:1px solid #b9b2a6; font-weight:600; padding-top:7pt}
-  .letter-body .words{font-style:italic; color:#3a352f; font-size:10pt; margin:0 0 12pt}
+  .letter-body .salary-tbl tr.total td{border-top:1px solid #b9b2a6; font-weight:600; padding-top:6pt}
+  .letter-body .words{font-style:italic; color:#3a352f; font-size:10pt; margin:0 0 9pt}
 
-  .letter-body table.terms{border-collapse:collapse; margin:6pt 0 12pt}
-  .letter-body table.terms td{padding:3pt 16pt 3pt 0; font-size:10pt; vertical-align:top}
+  .letter-body table.terms{border-collapse:collapse; margin:4pt 0 9pt}
+  .letter-body table.terms td{padding:2.5pt 16pt 2.5pt 0; font-size:10pt; vertical-align:top}
   .letter-body table.terms td.k{white-space:nowrap; color:#3a352f; font-weight:600}
 
-  .letter-body table.items{border-collapse:collapse; width:100%; margin:8pt 0 12pt; font-size:10pt}
+  .letter-body table.items{border-collapse:collapse; width:100%; margin:6pt 0 9pt; font-size:10pt}
   .letter-body table.items th, .letter-body table.items td{border:1px solid #cfc7ba; padding:5pt 8pt; text-align:left}
   .letter-body table.items th{background:#F3EFE8; font-weight:600}
 
-  .sign-block{margin-top:26pt}
-  .sign-block .for{margin-bottom:34pt}
+  .sign-block{margin-top:18pt; page-break-inside:avoid; break-inside:avoid}
+  .sign-block .for{margin-bottom:26pt}
   .sign-line{width:62mm; border-top:1px solid #2a2620; padding-top:4pt; font-size:10pt}
 
-  .letter-body table.sign-two{width:100%; border-collapse:collapse; margin-top:30pt}
+  .letter-body table.sign-two{width:100%; border-collapse:collapse; margin-top:20pt; page-break-inside:avoid; break-inside:avoid}
   .letter-body table.sign-two td{width:50%; vertical-align:bottom; padding-right:16pt}
-  .letter-body table.sign-two .role{font-size:10pt; color:#3a352f; margin-bottom:30pt}
+  .letter-body table.sign-two .role{font-size:10pt; color:#3a352f; margin-bottom:24pt}
   .letter-body table.sign-two .sign-line{width:56mm}
 
-  .lh-footer{margin-top:20pt}
+  /* Footer — sits in its own reserved band below the body */
+  .lh-footer{flex:none; margin-top:auto; padding-top:8pt; border-top:1px solid #EFE9DF}
   .lh-footer img{width:130mm; max-width:492px; height:auto; display:block}
 
   /* nav + log view */
@@ -148,19 +159,36 @@ if(typeof html2pdf==='undefined'){
   .addrow{background:#fff; color:var(--green); border:1px dashed var(--line); border-radius:8px; padding:6px 12px; font-size:13px; font-weight:600; cursor:pointer; margin-top:6px}
   .addrow:hover{border-color:var(--green); background:#F3F6F1}
 
+  /* PRINT — @page margins reserve top/bottom; fixed header/footer sit inside them */
   @media print{
-    @page{size:A4; margin:0}
+    @page{ size:A4; margin:20mm 0 42mm 0; }
     body{background:#fff}
     .topbar,.wrap>.panel,.preview-toolbar,.no-print{display:none !important}
     .wrap{display:block; padding:0; margin:0; max-width:none}
     .paper-scroll{overflow:visible}
-    .page{display:block; width:210mm; min-height:297mm; margin:0; box-shadow:none; padding:25.4mm 25.4mm 42mm}
-    .letter-body{flex:none}
-    .lh-footer{position:fixed; left:25.4mm; right:25.4mm; bottom:14mm; margin:0}
+    .page{display:block; width:auto; min-height:0; margin:0; box-shadow:none; padding:0 25.4mm}
+
+    .lh-header{
+      position:fixed; top:0; left:25.4mm; right:25.4mm;
+      margin:0; padding:6mm 0 4pt; background:#fff;
+      border-bottom:1px solid #EFE9DF; z-index:5;
+    }
+    .lh-header img{width:52mm; max-width:none}
+
+    .lh-footer{
+      position:fixed; bottom:0; left:25.4mm; right:25.4mm;
+      margin:0; padding:4pt 0 6mm; background:#fff;
+      border-top:1px solid #EFE9DF; z-index:5;
+    }
     .lh-footer img{width:130mm; max-width:none}
+
+    .letter-body{flex:none; padding-bottom:0; line-height:1.45}
+    .letter-body p{margin:0 0 7pt}
+    .sign-block, .letter-body table.sign-two{page-break-inside:avoid; break-inside:avoid}
+    .letter-body table.terms tr, .letter-body table.items tr{page-break-inside:avoid; break-inside:avoid}
+    .letter-body p, .letter-body table{orphans:3; widows:3}
   }
-</style>
-</head>
+</style></head>
 <body>
 
 <div class="topbar">
